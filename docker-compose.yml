@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  # 1. PostgreSQL + TimescaleDB (時序資料庫)
+  timescaledb:
+    image: timescale/timescaledb:latest-pg16
+    container_name: iot-postgres
+    environment:
+      POSTGRES_USER: iot_admin
+      POSTGRES_PASSWORD: poc_password
+      POSTGRES_DB: iot_poc
+    ports:
+      - "5432:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U iot_admin -d iot_poc"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # 2. Redis (熱點資料與緩存)
+  redis:
+    image: redis:7-alpine
+    container_name: iot-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # 3. Mosquitto (MQTT Broker)
+  mosquitto:
+    image: eclipse-mosquitto:latest
+    container_name: iot-mqtt
+    ports:
+      - "1883:1883"
+      - "9001:9001" # WebSockets 通訊埠 (如果未來前端有需要)
+    volumes:
+      - ./mosquitto/config:/mosquitto/config
+      - mosquitto_data:/mosquitto/data
+      - mosquitto_log:/mosquitto/log
+    restart: unless-stopped
+
+# 宣告永久保存的資料卷，即使容器砍掉重建，資料也還在
+volumes:
+  pg_data:
+  redis_data:
+  mosquitto_data:
+  mosquitto_log:

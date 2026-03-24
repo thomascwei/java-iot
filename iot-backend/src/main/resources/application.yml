@@ -1,0 +1,29 @@
+spring:
+  application:
+    name: iot-backend
+
+  # PostgreSQL 連線設定
+  datasource:
+    url: jdbc:postgresql://localhost:5432/iot_poc
+    username: iot_admin
+    password: poc_password
+    driver-class-name: org.postgresql.Driver
+
+  # JPA 自動建立資料表設定 (PoC 階段好用)
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+
+  # Redis 連線設定
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+  # Docker Compose 整合 (這會讓 Spring 啟動時確認服務是否活著)
+  docker:
+    compose:
+      # file: ../docker-compose.yml
+      # lifecycle-management: start_only
+      enabled: false # 讓 Spring Boot 不要去管外部的 docker-compose.yml
