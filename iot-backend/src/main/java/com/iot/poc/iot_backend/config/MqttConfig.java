@@ -1,6 +1,5 @@
 package com.iot.poc.iot_backend.config;
 
-import com.iot.poc.iot_backend.repository.IotDeviceRepository;
 import com.iot.poc.iot_backend.service.DeviceService;
 
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
@@ -17,15 +16,10 @@ import org.springframework.integration.mqtt.inbound.MqttPahoMessageDrivenChannel
 import org.springframework.integration.mqtt.support.DefaultPahoMessageConverter;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.MessageHandler;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Configuration
 @EnableIntegration
 public class MqttConfig {
-
-    @Autowired
-    private IotDeviceRepository deviceRepository;
 
     @Autowired
     private DeviceService deviceService; // 注入剛剛建好的 Service

@@ -1,11 +1,14 @@
 package com.iot.poc.iot_backend.controller;
 
+import com.iot.poc.iot_backend.entity.DeviceTelemetry;
 import com.iot.poc.iot_backend.entity.IotDevice;
 import com.iot.poc.iot_backend.repository.IotDeviceRepository;
+import com.iot.poc.iot_backend.service.DeviceService;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -19,7 +22,14 @@ public class DeviceController {
 
     @GetMapping
     public List<IotDevice> getAllDevices() {
-        // 這會直接去資料庫撈出剛才那兩筆資料
         return deviceRepository.findAll();
+    }
+
+    @Autowired
+    private DeviceService deviceService;
+
+    @GetMapping("/history")
+    public List<DeviceTelemetry> getDeviceHistory(@RequestParam(required = false) String deviceId) {
+        return deviceService.getHistory(deviceId);
     }
 }

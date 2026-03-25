@@ -2,15 +2,26 @@ package com.iot.poc.iot_backend.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.iot.poc.iot_backend.entity.DeviceTelemetry;
+import com.iot.poc.iot_backend.repository.DeviceTelemetryRepository;
 import com.iot.poc.iot_backend.repository.IotDeviceRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
+import java.time.Duration;
+import java.util.List;
 
 @Service
 public class DeviceService {
 
     @Autowired
     private IotDeviceRepository deviceRepository;
+
+    @Autowired
+    private DeviceTelemetryRepository telemetryRepository; // SQL 歷史紀錄
+
+    @Autowired
+    private StringRedisTemplate redisTemplate; // Redis Hot Data
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -27,6 +38,26 @@ public class DeviceService {
 
             // 2. 解析 JSON Payload
             JsonNode jsonNode = objectMapper.readTree(payload);
+
+            // === 1. Hot Data (Redis) ===
+            // 存儲最新狀態與數值，並設定過期時間（例如 10 分鐘沒更新視為斷線）
+            String redisKey = "device:status:" + deviceId;
+            System.out.println("DEBUG: 準備寫入 Redis -> Key: " + redisKey + ", Value: " + payload);
+
+            try {
+                redisTemplate.opsForValue().set(redisKey, payload, Duration.ofMinutes(10));
+                System.out.println("SUCCESS: Redis 寫入成功！");
+            } catch (Exception e) {
+                System.err.println("ERROR: Redis 寫入失敗！錯誤原因: " + e.getMessage());
+            }
+            // === 2. Cold Data (SQL: 歷史紀錄) ===
+            DeviceTelemetry history = new DeviceTelemetry();
+            history.setDeviceId(deviceId);
+            if (jsonNode.has("temp"))
+                history.setTemperature(jsonNode.get("temp").asDouble());
+            if (jsonNode.has("humidity"))
+                history.setHumidity(jsonNode.get("humidity").asDouble());
+            telemetryRepository.save(history);
 
             // 3. 判斷目標狀態
             String targetStatus = determineStatus(jsonNode);
@@ -53,5 +84,12 @@ public class DeviceService {
             }
         }
         return "ONLINE";
+    }
+
+    public List<DeviceTelemetry> getHistory(String deviceId) {
+        if (deviceId == null || deviceId.isEmpty()) {
+            return telemetryRepository.findAllByOrderByCreatedAtDesc();
+        }
+        return telemetryRepository.findByDeviceIdOrderByCreatedAtDesc(deviceId);
     }
 }

@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 
 services:
   # 1. PostgreSQL + TimescaleDB (時序資料庫)
@@ -48,9 +48,23 @@ services:
       - mosquitto_log:/mosquitto/log
     restart: unless-stopped
 
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_INSTALL_PLUGINS=redis-datasource # 自動安裝 Redis 插件
+    volumes:
+      - grafana-storage:/var/lib/grafana
+    depends_on:
+      - timescaledb
+      - redis
+
 # 宣告永久保存的資料卷，即使容器砍掉重建，資料也還在
 volumes:
   pg_data:
   redis_data:
   mosquitto_data:
   mosquitto_log:
+  grafana-storage:
