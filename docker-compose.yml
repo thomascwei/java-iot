@@ -3,7 +3,7 @@ version: "3.8"
 services:
   # 1. PostgreSQL + TimescaleDB (時序資料庫)
   timescaledb:
-    image: timescale/timescaledb:latest-pg16
+    image: timescale/timescaledb:2.25.2-pg16
     container_name: iot-postgres
     environment:
       POSTGRES_USER: iot_admin
@@ -37,7 +37,7 @@ services:
 
   # 3. Mosquitto (MQTT Broker)
   mosquitto:
-    image: eclipse-mosquitto:latest
+    image: eclipse-mosquitto:2.1.2
     container_name: iot-mqtt
     ports:
       - "1883:1883"
